@@ -55,7 +55,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     });
     Database.queryWeather().then((Query query) {
       setState(() {
-        print(query);
         _queryWeather = query;
       });
     });
@@ -99,6 +98,34 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         },
       );
     }
+
+    Widget bodyw = new Text('Loading....');
+    if(_queryWeather!=null) {
+      bodyw = new PageView.builder(
+          physics: new AlwaysScrollableScrollPhysics(),
+          controller: _pageController,
+          itemBuilder: (BuildContext context, int index) {
+            return StreamBuilder<Event>(
+                stream: _queryWeather.onValue,
+                builder: (BuildContext context, AsyncSnapshot<Event> event) {
+                  if (event.hasData) {
+                    if (event.data.snapshot.value != null) {
+                      Map<String, dynamic> map = new Map<String, dynamic>.from(event.data.snapshot.value[index]);
+                      print(map);
+                      Weather weather = Weather.fromJson(map);
+                      return new Column(
+                          children: <Widget>[
+                      new WeatherCard(weather: weather)
+                      ]);
+                    }
+                    return new Text('Loading...');
+                  }
+                  return new Text('Loading...');
+                }
+            );
+          }
+      );
+    }
 /*    if(_queryWeather != null){
       body = new FirebaseAnimatedList(
         query: _queryWeather,
@@ -128,23 +155,11 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
           children: <Widget>[
             new Image.asset('assets/logo_b.jpg'),
             new Flexible(child: body),
-
+            new Flexible(child: bodyw)
           ]
       ),
     );
   }
 
-  Widget buildTab(){
-    List<Weather> list = new List<Weather>();
-    _queryWeather.onValue.listen((event){
-      list.add(Weather.fromJson(event.snapshot.value));
-    });
-    new PageView.builder(
-        physics: new AlwaysScrollableScrollPhysics(),
-        controller: _pageController,
-        itemBuilder: (BuildContext context, int index) {
-    return _pages[index % _pages.length];
-    }
-    );
-  }
+
 }
