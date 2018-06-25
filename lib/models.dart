@@ -1,4 +1,3 @@
-
 import 'package:firebase_database/firebase_database.dart';
 
 class Meeting {
@@ -17,42 +16,48 @@ class Meeting {
   }
 }
 
-class Weather extends Object{
+class Weather{
   final String city;
-  final List<Forecast> forecasts;
-  final List<ForecastDay> forecaststxt;
+  final Forecasts forecasts;
+  final ForecastsDay forecaststxt;
   final CurrentObservation currentobservation;
 
   Weather({this.city, this.forecasts, this.currentobservation, this.forecaststxt});
 
-  factory Weather.fromJson(DataSnapshot map){
-
-    List<Forecast> _getList(Map<String, dynamic> map) {
-      List<Forecast> list = new List<Forecast>();
-      List element =  map.values as List;
-      element.forEach((item){
-        Forecast f = Forecast.fromJson(item);
-        list.add(f);
-      });
-      return list;
-    }
-
-    List<ForecastDay> _getDayList(Map<String, dynamic> map) {
-      List<ForecastDay> list = new List<ForecastDay>();
-      List element =  map as List;
-      element.forEach((item){
-        ForecastDay f = ForecastDay.fromJson(item);
-        list.add(f);
-      });
-      return list;
-    }
-
+  factory Weather.fromJson(Map<String, dynamic> map){
     return new Weather(
-      city: map.value['city'],
-      forecasts: _getList(map.value['forecast']['forecast']['simpleforecast']['forecastday']),
-      currentobservation: CurrentObservation.fromJson(map.value['weather']['current_observation']),
-      forecaststxt: _getDayList(map.value['forecast']['txt_forecast']['forecastday'])
+      city: map['city'],
+      forecasts: Forecasts.fromJson(map['forecast']['forecast']['simpleforecast']),
+      currentobservation: CurrentObservation.fromJson(map['weather']['current_observation']),
+      forecaststxt: ForecastsDay.fromJson(map['forecast']['forecast']['txt_forecast'])
     );
+  }
+}
+
+class ForecastsDay {
+  final List<ForecastDay> forecastsday;
+  const ForecastsDay(this.forecastsday);
+
+  factory ForecastsDay.fromJson(Map map){
+    List<ForecastDay> list = new List<ForecastDay>();
+    for(var day in map['forecastday']){
+      list.add(ForecastDay.fromJson(day));
+    }
+    return new ForecastsDay(list);
+  }
+}
+
+class Forecasts {
+  final List<Forecast> forecasts;
+  const Forecasts(this.forecasts);
+
+  factory Forecasts.fromJson(Map map){
+    List<Forecast> list = new List<Forecast>();
+    for(var fore in map['forecastday']){
+      Forecast f = Forecast.fromJson(fore);
+      list.add(f);
+    }
+    return new Forecasts(list);
   }
 }
 
@@ -65,7 +70,7 @@ class CurrentObservation extends Object{
 
   CurrentObservation({this.icon, this.temp_c, this.temp_f, this.uv, this.windir});
 
-  factory CurrentObservation.fromJson(Map<String, dynamic> map){
+  factory CurrentObservation.fromJson(Map map){
     return new CurrentObservation(
       icon: map['icon'].toString(),
       temp_c: map['temp_c'].toString(),
@@ -86,7 +91,7 @@ class ForecastDay extends Object {
   ForecastDay({this.fcttext, this.fcttext_metric, this.icon, this.pop,
       this.title});
 
-  factory ForecastDay.fromJson(Map<String, dynamic> map) {
+  factory ForecastDay.fromJson(Map map) {
     return new ForecastDay(
       pop: map['pop'].toString(),
       icon: map['icon'].toString(),
@@ -110,7 +115,7 @@ class Forecast extends Object{
   Forecast({this.conditions, this.avehumidity, this.avewind, this.high, this.low,
       this.icon, this.pop, this.weekday_short});
 
-  factory Forecast.fromJson(Map<String, dynamic> map){
+  factory Forecast.fromJson(Map map){
     return new Forecast(
       avehumidity: map['avehumidity'].toString(),
       conditions: map['conditions'].toString(),
@@ -134,9 +139,9 @@ class Temp extends Object{
 
   Temp({this.celcius, this.fahrenheit});
 
-  factory Temp.fromJson(Map<String, dynamic> map){
+  factory Temp.fromJson(Map map){
     return new Temp(
-      celcius: map['celcius'].toString(),
+      celcius: map['celsius'].toString(),
       fahrenheit: map['fahrenheit'].toString(),
     );
   }
@@ -150,7 +155,7 @@ class Wind extends Object{
 
   Wind({this.degrees, this.dir, this.kph, this.mph});
 
-  factory Wind.fromJson(Map<String, dynamic> map){
+  factory Wind.fromJson(Map map){
     return new Wind(
       degrees: map['degrees'].toString(),
       dir: map['dir'].toString(),

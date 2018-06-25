@@ -4,9 +4,10 @@ description: Tela da recepcao
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: '^0.2.1'
+  firebase_core: '^0.2.4'
   firebase_database: '^1.0.1'
   firebase_auth: '^0.5.11'
+  carousel: "^0.1.0"
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
@@ -28,8 +29,49 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #  - images/a_dot_burr.jpeg
+  assets:
+     - assets/logo.jpeg
+     - assets/logo_b.jpg
+     - assets/chanceflurries.png
+     - assets/chancerain.png
+     - assets/chancesleet.png
+     - assets/chancesnow.png
+     - assets/chancetstorms.png
+     - assets/clear.png
+     - assets/cloudy.png
+     - assets/flurries.png
+     - assets/fog.png
+     - assets/hazy.png
+     - assets/mostlycloudy.png
+     - assets/mostlysunny.png
+     - assets/nt_chanceflurries.png
+     - assets/nt_chancerain.png
+     - assets/nt_chancesleet.png
+     - assets/nt_chancesnow.png
+     - assets/nt_chancetstorms.png
+     - assets/nt_clear.png
+     - assets/nt_cloudy.png
+     - assets/nt_flurries.png
+     - assets/nt_fog.png
+     - assets/nt_hazy.png
+     - assets/nt_mostlycloudy.png
+     - assets/nt_mostlysunny.png
+     - assets/nt_partlycloudy.png
+     - assets/nt_rain.png
+     - assets/nt_sleet.png
+     - assets/nt_snow.png
+     - assets/nt_sunny.png
+     - assets/nt_tstorms.png
+     - assets/nt_unknown.png
+     - assets/partlycloudy.png
+     - assets/partlysunny.png
+     - assets/rain.png
+     - assets/sleet.png
+     - assets/snow.png
+     - assets/sunny.png
+     - assets/tstorms.png
+     - assets/unknown.png
+     - assets/wundergroundlogo.png
   #  - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

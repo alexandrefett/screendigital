@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:screendigital/database.dart';
 import 'package:screendigital/models.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:screendigital/weather.dart';
+import 'package:carousel/carousel.dart';
 
 FirebaseUser user;
 
@@ -35,79 +40,111 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  DatabaseReference _eventsRef;
-  DatabaseReference _weatherRef;
-  DatabaseReference _imagesRef;
-  StreamSubscription<Event> _eventsSub;
-  StreamSubscription<Event> _weatherSub;
-  StreamSubscription<Event> _imagesSub;
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
 
-  List<Meeting> items = List();
+  PageController _pageController;
+  Query _query;
+  Query _queryWeather;
 
   @override
   void initState() {
+    Database.queryMeetings().then((Query query) {
+      setState(() {
+        _query = query;
+      });
+    });
+    Database.queryWeather().then((Query query) {
+      setState(() {
+        print(query);
+        _queryWeather = query;
+      });
+    });
     super.initState();
-    final FirebaseDatabase database = new FirebaseDatabase(app: widget.app);
-
-    _eventsRef = database.reference().child('events');
-    _weatherRef = database.reference().child('weather');
-    _imagesRef = database.reference().child('images');
-
-    //_eventsRef.onChildAdded.listen(_onEventAdded);
-    //_eventsRef.onChildRemoved.listen(_onEventRemoved);
-    //_eventsRef.onChildChanged.listen(_onEventChanged);
-
-    _eventsSub = _eventsRef.onValue.listen((data) {
-      print('----------------');
-      print(data.snapshot.value);
-    });
-  }
-
-  _onEventAdded(Event event) {
-    setState(() {
-      items.add(Meeting.fromJson(event.snapshot));
-    });
-  }
-
-  _onEventRemoved(Event event) {
-    setState(() {
-      items.add(Meeting.fromJson(event.snapshot));
-    });
-  }
-
-  _onEventChanged(Event event) {
-    var old = items.singleWhere((entry) {
-      return entry.key == event.snapshot.key;
-    });
-    setState(() {
-      items[items.indexOf(old)] = Meeting.fromJson(event.snapshot);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    new StreamBuilder(
-        stream: FirebaseDatabase.instance.reference().child('events').onValue,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
-            if (snapshot.data != null) {
-              return new ListView(
-                children: snapshot.data.documents.map((DataSnapshot document) {
-                  return new ListTile(
-                    title: new Text(document.value['description']),
-                    subtitle: new Text(document.value['location']),
-                  );
-                }).toList(),
-              );
-            }
-          }
-        });
+    Widget body = new ListView(
+      children: <Widget>[
+        new ListTile(
+          title: new Text("The list is empty..."),
+        )
+      ],
+    );
+
+    if (_query != null) {
+      body = new FirebaseAnimatedList(
+        query: _query,
+        itemBuilder: (
+            BuildContext context,
+            DataSnapshot snapshot,
+            Animation<double> animation,
+            int index,
+            ) {
+          String mountainKey = snapshot.key;
+          Map map = snapshot.value;
+          String description = map['description'] as String;
+          String location = map['location'] as String;
+          return new Column(
+            children: <Widget>[
+              new ListTile(
+                title: new Text('$description'),
+                subtitle: new Text('$location'),
+              ),
+              new Divider(
+                height: 1.0,
+              ),
+            ],
+          );
+        },
+      );
+    }
+/*    if(_queryWeather != null){
+      body = new FirebaseAnimatedList(
+        query: _queryWeather,
+        itemBuilder: (
+            BuildContext context,
+            DataSnapshot snapshot,
+            Animation<double> animation,
+            int index,
+            ) {
+         // String mountainKey = snapshot.key;
+          Map<String, dynamic> map = new Map<String, dynamic>.from(snapshot.value);
+          Weather weather = Weather.fromJson(map);
+          return new Column(
+            children: <Widget>[
+              new WeatherCard(weather: weather),
+              new Divider(
+                height: 1.0,
+              ),
+            ],
+          );
+        },
+      );
+    }
+    */
+    return new Scaffold(
+      body: new Column(
+          children: <Widget>[
+            new Image.asset('assets/logo_b.jpg'),
+            new Flexible(child: body),
+
+          ]
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    _eventsSub.cancel();
+  Widget buildTab(){
+    List<Weather> list = new List<Weather>();
+    _queryWeather.onValue.listen((event){
+      list.add(Weather.fromJson(event.snapshot.value));
+    });
+    new PageView.builder(
+        physics: new AlwaysScrollableScrollPhysics(),
+        controller: _pageController,
+        itemBuilder: (BuildContext context, int index) {
+    return _pages[index % _pages.length];
+    }
+    );
   }
 }
