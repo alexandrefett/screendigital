@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,9 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:screendigital/database.dart';
 import 'package:screendigital/models.dart';
-import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:screendigital/weather.dart';
-import 'package:carousel/carousel.dart';
 
 FirebaseUser user;
 
@@ -72,31 +69,23 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     );
 
     if (_query != null) {
-      body = new FirebaseAnimatedList(
-        query: _query,
-        itemBuilder: (
-            BuildContext context,
-            DataSnapshot snapshot,
-            Animation<double> animation,
-            int index,
-            ) {
-          String mountainKey = snapshot.key;
-          Map map = snapshot.value;
-          String description = map['description'] as String;
-          String location = map['location'] as String;
-          return new Column(
-            children: <Widget>[
-              new ListTile(
-                title: new Text('$description'),
-                subtitle: new Text('$location'),
-              ),
-              new Divider(
-                height: 1.0,
-              ),
-            ],
-          );
-        },
-      );
+      body = new StreamBuilder<Event>(
+        stream: _query.onValue,
+        builder: (BuildContext context, AsyncSnapshot<Event> event) {
+          if (event.hasData) {
+            if (event.data.snapshot.value != null) {
+              return new ListView.builder(
+                  itemCount: event.data.snapshot.value.length,
+                  itemBuilder: (BuildContext context, int index){
+                    Map<String, dynamic> map = new Map<String, dynamic>.from(event.data.snapshot.value[index]);
+                    return new ListTile(
+                      title: new Text(map['description']),
+                      subtitle: new Text(map['location']),
+                    );
+                  });
+            }}
+          return new Text('Loading...');
+        });
     }
 
     Widget bodyw = new Text('Loading....');
@@ -111,7 +100,6 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                   if (event.hasData) {
                     if (event.data.snapshot.value != null) {
                       Map<String, dynamic> map = new Map<String, dynamic>.from(event.data.snapshot.value[index]);
-                      print(map);
                       Weather weather = Weather.fromJson(map);
                       return new Column(
                           children: <Widget>[
@@ -126,7 +114,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
           }
       );
     }
-/*    if(_queryWeather != null){
+/*
+    if(_queryWeather != null){
       body = new FirebaseAnimatedList(
         query: _queryWeather,
         itemBuilder: (
@@ -151,15 +140,17 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
     */
     return new Scaffold(
-      body: new Column(
+        body: new  Column(
+          mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            new Image.asset('assets/logo_b.jpg'),
-            new Flexible(child: body),
-            new Flexible(child: bodyw)
+            new Expanded(child: new Image.asset('assets/logo_b.jpg'),flex: 3),
+            new Expanded(child: body,flex: 9,),
+            new Expanded(child: bodyw,flex: 5,)
           ]
-      ),
+    )
     );
   }
+
 
 
 }
