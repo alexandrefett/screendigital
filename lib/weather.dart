@@ -9,17 +9,18 @@ class WeatherCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Container(
-      padding: new EdgeInsets.all(16.0),
+      padding: new EdgeInsets.all(8.0),
         child: new Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             new Text(weather.city, style: new TextStyle(fontWeight: FontWeight.bold),),
             new Text(weather.forecaststxt.forecastsday[0].fcttext_metric),
             buildcurrent(weather),
+            new Text(weather.currentobservation.observation_time,style: new TextStyle(fontSize: 10.0),),
           ],
     ));
   }
-
 
   Widget buildday(Forecast day) {
     return new Column(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
 import 'package:screendigital/database.dart';
 import 'package:screendigital/models.dart';
 import 'package:screendigital/weather.dart';
@@ -23,8 +24,12 @@ Future<void> main() async {
   runApp(new MaterialApp(
     title: 'Flutter Demo',
     theme: new ThemeData(
-      primarySwatch: Colors.blue,
-    ),
+        accentColor: Colors.white,
+        primaryColor: Colors.white,
+        primarySwatch: Colors.blue,
+        textTheme: new TextTheme(
+            body1: new TextStyle(color: Colors.white),
+            body2: new TextStyle(color: Colors.white))),
     home: new MyHomePage(app: app),
   ));
 }
@@ -37,14 +42,36 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
-
-  PageController _pageController;
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin {
+  final PageController _pageController = new PageController();
   Query _query;
   Query _queryWeather;
+  Query _queryImages;
+  bool _hasEvent = false;
+
+  Widget buildListWeather() {
+    return new StreamBuilder<Event>(
+        stream: _queryWeather.onValue,
+        builder: (BuildContext context, AsyncSnapshot<Event> event) {
+          if (event.hasData) {
+            if (event.data.snapshot.value != null) {
+              return new ListView.builder(
+                  itemCount: event.data.snapshot.value.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    Map<String, dynamic> map = new Map<String, dynamic>.from(
+                        event.data.snapshot.value[index]);
+                    return new WeatherCard(weather: Weather.fromJson(map));
+                  });
+            }
+          }
+          return new Text('Loading...');
+        });
+  }
 
   @override
   void initState() {
+    SystemChrome.setEnabledSystemUIOverlays([]);
     Database.queryMeetings().then((Query query) {
       setState(() {
         _query = query;
@@ -55,102 +82,113 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         _queryWeather = query;
       });
     });
+    Database.queryImages().then((Query query) {
+      setState(() {
+        _queryImages = query;
+      });
+    });
     super.initState();
+  }
+
+  void startFlipping() {
+    const sleep = const Duration(seconds: 15);
+    _pageController.nextPage(
+        duration: Duration(seconds: 1), curve: Curves.ease);
+    new Timer(sleep, () => startFlipping());
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget body = new ListView(
-      children: <Widget>[
-        new ListTile(
-          title: new Text("The list is empty..."),
-        )
-      ],
-    );
-
-    if (_query != null) {
-      body = new StreamBuilder<Event>(
+    Widget body = new StreamBuilder<Event>(
         stream: _query.onValue,
         builder: (BuildContext context, AsyncSnapshot<Event> event) {
           if (event.hasData) {
             if (event.data.snapshot.value != null) {
+              setState(() {
+                _hasEvent = true;
+              });
               return new ListView.builder(
                   itemCount: event.data.snapshot.value.length,
-                  itemBuilder: (BuildContext context, int index){
-                    Map<String, dynamic> map = new Map<String, dynamic>.from(event.data.snapshot.value[index]);
+                  itemBuilder: (BuildContext context, int index) {
+                    Map<String, dynamic> map = new Map<String, dynamic>.from(
+                        event.data.snapshot.value[index]);
                     return new ListTile(
                       title: new Text(map['description']),
                       subtitle: new Text(map['location']),
                     );
                   });
-            }}
+            }
+            else {
+              setState(() {
+                _hasEvent = false;
+              });
+            }
+          }
           return new Text('Loading...');
         });
-    }
 
-    Widget bodyw = new Text('Loading....');
-    if(_queryWeather!=null) {
-      bodyw = new PageView.builder(
-          physics: new AlwaysScrollableScrollPhysics(),
-          controller: _pageController,
-          itemBuilder: (BuildContext context, int index) {
-            return StreamBuilder<Event>(
-                stream: _queryWeather.onValue,
-                builder: (BuildContext context, AsyncSnapshot<Event> event) {
-                  if (event.hasData) {
-                    if (event.data.snapshot.value != null) {
-                      Map<String, dynamic> map = new Map<String, dynamic>.from(event.data.snapshot.value[index]);
-                      Weather weather = Weather.fromJson(map);
-                      return new Column(
-                          children: <Widget>[
+    Widget bodyBanner = new PageView.builder(
+        physics: new AlwaysScrollableScrollPhysics(),
+        controller: _pageController,
+        itemBuilder: (BuildContext context, int index) {
+          return StreamBuilder<Event>(
+              stream: _queryWeather.onValue,
+              builder: (BuildContext context, AsyncSnapshot<Event> event) {
+                if (event.hasData) {
+                  if (event.data.snapshot.value != null) {
+                    Map<String, dynamic> map = new Map<String, dynamic>.from(
+                        event.data.snapshot.value[index]);
+                    Weather weather = Weather.fromJson(map);
+                    return new Column(children: <Widget>[
                       new WeatherCard(weather: weather)
-                      ]);
-                    }
-                    return new Text('Loading...');
+                    ]);
                   }
                   return new Text('Loading...');
                 }
-            );
+                return new Text('Loading...');
+              });
+        });
+
+    Widget bodyWeather = new StreamBuilder<Event>(
+      stream: _queryWeather.onValue,
+      builder: (BuildContext context, AsyncSnapshot<Event> event) {
+        if (event.hasData) {
+          if (event.data.snapshot.value != null) {
+            return new ListView.builder(
+                itemCount: event.data.snapshot.value.length,
+                itemBuilder: (BuildContext context, int index) {
+                  Map<String, dynamic> map = new Map<String, dynamic>.from(
+                      event.data.snapshot.value[index]);
+                  return new WeatherCard(weather: Weather.fromJson(map));
+                });
           }
-      );
+        }
+        return new Text('Loading...');
+      });
+
+    if (_hasEvent) {
+      return new Scaffold(
+        backgroundColor: new Color.fromARGB(255, 0, 77, 105),
+        body: new Padding(
+          padding: new EdgeInsets.all(8.0),
+          child: new Column(
+              mainAxisSize: MainAxisSize.max, children: <Widget>[
+            new Expanded(
+                child: new Image.asset('assets/icon-512x512.jpg'), flex: 3),
+            new Expanded(child: body, flex: 10),
+            new Expanded(child: bodyBanner, flex: 5)
+          ])));
+    } else {
+      return new Scaffold(
+        backgroundColor: new Color.fromARGB(255, 0, 77, 105),
+        body: new Padding(
+          padding: new EdgeInsets.all(8.0),
+          child: new Column(
+              mainAxisSize: MainAxisSize.max, children: <Widget>[
+            new Expanded(
+                child: new Image.asset('assets/icon-512x512.jpg'), flex: 3),
+            new Expanded(child: bodyWeather, flex: 10),
+          ])));
     }
-/*
-    if(_queryWeather != null){
-      body = new FirebaseAnimatedList(
-        query: _queryWeather,
-        itemBuilder: (
-            BuildContext context,
-            DataSnapshot snapshot,
-            Animation<double> animation,
-            int index,
-            ) {
-         // String mountainKey = snapshot.key;
-          Map<String, dynamic> map = new Map<String, dynamic>.from(snapshot.value);
-          Weather weather = Weather.fromJson(map);
-          return new Column(
-            children: <Widget>[
-              new WeatherCard(weather: weather),
-              new Divider(
-                height: 1.0,
-              ),
-            ],
-          );
-        },
-      );
-    }
-    */
-    return new Scaffold(
-        body: new  Column(
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            new Expanded(child: new Image.asset('assets/logo_b.jpg'),flex: 3),
-            new Expanded(child: body,flex: 9,),
-            new Expanded(child: bodyw,flex: 5,)
-          ]
-    )
-    );
   }
-
-
-
 }

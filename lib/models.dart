@@ -67,8 +67,9 @@ class CurrentObservation extends Object{
   final String temp_f;
   final String uv;
   final String windir;
+  final String observation_time;
 
-  CurrentObservation({this.icon, this.temp_c, this.temp_f, this.uv, this.windir});
+  CurrentObservation({this.icon, this.temp_c, this.temp_f, this.uv, this.windir, this.observation_time});
 
   factory CurrentObservation.fromJson(Map map){
     return new CurrentObservation(
@@ -76,7 +77,8 @@ class CurrentObservation extends Object{
       temp_c: map['temp_c'].toString(),
       temp_f: map['temp_f'].toString(),
       uv: map['UV'].toString(),
-      windir: map['windir'].toString()
+      windir: map['windir'].toString(),
+      observation_time: map['observation_time'].toString()
     );
   }
 }
