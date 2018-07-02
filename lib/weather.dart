@@ -14,10 +14,9 @@ class WeatherCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            new Text(weather.city, style: new TextStyle(fontWeight: FontWeight.bold),),
-            new Text(weather.forecaststxt.forecastsday[0].fcttext_metric),
+            new Text(weather.city, style: new TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),),
+            new Text(weather.forecaststxt.forecastsday[0].fcttext_metric, style: new TextStyle(fontSize: 18.0)),
             buildcurrent(weather),
-            new Text(weather.currentobservation.observation_time,style: new TextStyle(fontSize: 10.0),),
           ],
     ));
   }

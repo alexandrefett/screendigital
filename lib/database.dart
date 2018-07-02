@@ -6,7 +6,7 @@ class Database{
   static Future<Query> queryMeetings() async {
     return FirebaseDatabase.instance
         .reference()
-        .child("events");
+        .child("eventss");
   }
 
   static Future<Query> queryWeather() async {
