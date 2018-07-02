@@ -59,32 +59,21 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget bodyWeather(Query query) {
     return new StreamBuilder<Event>(
-        stream: query.onValue,
-        builder: (BuildContext context, AsyncSnapshot<Event> event) {
-          if (event.hasData) {
-            if (event.data.snapshot.value != null) {
-              return new ListView.builder(
-                  itemCount: event.data.snapshot.value.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    Map<String, dynamic> map = new Map<String, dynamic>.from(
-                        event.data.snapshot.value[index]);
-                    return new WeatherCard(weather: Weather.fromJson(map));
-                  });
-            }
+      stream: query.onValue,
+      builder: (BuildContext context, AsyncSnapshot<Event> event) {
+        if (event.hasData) {
+          if (event.data.snapshot.value != null) {
+            return new ListView.builder(
+              itemCount: event.data.snapshot.value.length,
+              itemBuilder: (BuildContext context, int index) {
+                Map<String, dynamic> map = new Map<String, dynamic>.from(
+                    event.data.snapshot.value[index]);
+                return new WeatherCard(weather: Weather.fromJson(map));
+              });
           }
-          return new Text('Loading...');
-        });
-  }
-
-  void getImages() {
-    _queryImages.onValue.forEach((Event event) {
-      for (int i = 0; i < event.snapshot.value.length; i++) {
-        Map<String, dynamic> map =
-            new Map<String, dynamic>.from(event.snapshot.value[i]);
-          fullPage.add(new Image.network(map['url']));
-        print(map['url']);
-      }
-    });
+        }
+        return new Text('Loading...');
+      });
   }
 
   @override
@@ -99,12 +88,33 @@ class _MyHomePageState extends State<MyHomePage>
     Database.queryWeather().then((Query query) {
       setState(() {
         _queryWeather = query;
-        fullPage.add(bodyWeather(_queryWeather));
+        //fullPage.add(bodyWeather(_queryWeather));
       });
     });
     Database.queryImages().then((Query query) {
       setState(() {
+        if(_queryWeather!=null){
+          fullPage.add(
+              new Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    new Image.asset('assets/icon-512x512.jpg'),
+                    new Expanded(child: bodyWeather(_queryWeather))
+                  ]
+              )
+          );
+        }
         _queryImages = query;
+        if(_queryImages!=null) {
+          _queryImages.onValue.forEach((Event event) {
+            for (int i = 0; i < event.snapshot.value.length; i++) {
+              Map<String, dynamic> map =
+              new Map<String, dynamic>.from(event.snapshot.value[i]);
+              fullPage.add(new Image.network(map['url']));
+              print(map['url']);
+            }
+          });
+        }
       });
     });
     super.initState();
@@ -167,16 +177,6 @@ class _MyHomePageState extends State<MyHomePage>
                     viewportFraction: 1.0,
                   );
                 }
-                else{
-                  return new ListView.builder(
-                      itemCount: event.data.snapshot.value.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        Map<String, dynamic> map = new Map<String,
-                            dynamic>.from(
-                            event.data.snapshot.value[index]);
-                        return new WeatherCard(weather: Weather.fromJson(map));
-                      });
-                }
               }
             }
             return new Text('Loading...');
@@ -196,19 +196,15 @@ class _MyHomePageState extends State<MyHomePage>
               new Expanded(child: bodyWeather, flex: 7)
           ])));
     } else {
-      getImages();
+
       return new Scaffold(
         backgroundColor: new Color.fromARGB(255, 0, 77, 105),
-        body: new PageView.builder(
-          physics: new AlwaysScrollableScrollPhysics(),
-          itemCount: fullPage.length,
-          controller: _pageController,
-          itemBuilder: (BuildContext context, int index) {
-            print(fullPage.length);
-            return fullPage[index];
-          }
-        )
-      );
+        body: new CarouselSlider(height: 1920.0,
+          items: fullPage,
+          autoPlay: true,
+          interval: new Duration(seconds: 15),
+          viewportFraction: 1.0,
+        ));
     }
   }
 }
