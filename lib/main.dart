@@ -49,7 +49,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
 
-  PageController _pageController;
   Query _query;
   Query _queryWeather;
   Query _queryImages;
@@ -76,23 +75,99 @@ class _MyHomePageState extends State<MyHomePage>
       });
   }
 
+  Widget carouselWeather(Query query){
+    return new StreamBuilder<Event>(
+      stream: query.onValue,
+      builder: (BuildContext context, AsyncSnapshot<Event> event) {
+        if (event.hasData) {
+          if (event.data.snapshot.value != null) {
+            pageCount = event.data.snapshot.value.length;
+            if(_hasEvent) {
+              return new CarouselSlider(
+                items: event.data.snapshot.value.map<Widget>((item) {
+                  print(item);
+                  return new Builder(builder: (BuildContext context) {
+                    Map<String, dynamic> map = new Map<String, dynamic>.from(item);
+                    return new Column(
+                        children: <Widget>[
+                          new WeatherCard(weather: Weather.fromJson(map))
+                        ]);
+                  });
+                }).toList(),
+                autoPlay: true,
+                interval: new Duration(seconds: 15),
+                viewportFraction: 1.0,
+              );
+            }
+          }
+        }
+        return new Text('Loading...');
+      });
+  }
+
+  Widget bodyEvent(Query query){
+    return new StreamBuilder<Event>(
+        stream: query.onValue,
+        builder: (BuildContext context, AsyncSnapshot<Event> event) {
+          if (event.hasData) {
+            if (event.data.snapshot.value != null) {
+              print('------------------true');
+              _hasEvent = true;
+              return new ListView.builder(
+                  itemCount: event.data.snapshot.value.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    Map<String, dynamic> map = new Map<String, dynamic>.from(
+                        event.data.snapshot.value[index]);
+                    return new ListTile(
+                      title: new Text(map['description'],
+                          style: new TextStyle(color: Colors.white,fontSize: 22.0)),
+                      subtitle: new Text(map['location'],
+                          style: new TextStyle(color: Colors.white)),
+                    );
+                  });
+            }
+          }
+          return new Text('Loading...');
+        });
+
+  }
+
   @override
   void initState() {
     SystemChrome.setEnabledSystemUIOverlays([]);
     fullPage = new List<Widget>();
+
     Database.queryMeetings().then((Query query) {
       setState(() {
         _query = query;
+        if (_query != null) {
+          _query.onValue.listen((onValue) {
+            if (onValue.snapshot.value.length > 0) {
+              setState(() {
+                print('-----------------true');
+                _hasEvent = true;
+              });
+            }
+            else {
+              setState(() {
+                print('-----------------false');
+                _hasEvent = false;
+              });
+            }
+          });
+        }
       });
     });
+
     Database.queryWeather().then((Query query) {
       setState(() {
         _queryWeather = query;
-        //fullPage.add(bodyWeather(_queryWeather));
       });
     });
+
     Database.queryImages().then((Query query) {
       setState(() {
+        fullPage.clear();
         if(_queryWeather!=null){
           fullPage.add(
               new Column(
@@ -122,84 +197,18 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    Widget body = new Text('Loading...');
-    Widget bodyWeather = new Text('Loading...');
-
-    if (_query != null) {
-      body = new StreamBuilder<Event>(
-          stream: _query.onValue,
-          builder: (BuildContext context, AsyncSnapshot<Event> event) {
-            if (event.hasData) {
-              if (event.data.snapshot.value != null) {
-                _hasEvent = true;
-                return new ListView.builder(
-                    itemCount: event.data.snapshot.value.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      Map<String, dynamic> map = new Map<String, dynamic>.from(
-                          event.data.snapshot.value[index]);
-                      return new ListTile(
-                        title: new Text(map['description'],
-                            style: new TextStyle(color: Colors.white,fontSize: 22.0)),
-                        subtitle: new Text(map['location'],
-                            style: new TextStyle(color: Colors.white)),
-                      );
-                    });
-              }
-            }
-            return new Text('Loading...');
-          });
-    }
-    else{
-      _hasEvent = false;
-    }
-
-    if (_queryWeather != null) {
-      bodyWeather = new StreamBuilder<Event>(
-          stream: _queryWeather.onValue,
-          builder: (BuildContext context, AsyncSnapshot<Event> event) {
-            if (event.hasData) {
-              if (event.data.snapshot.value != null) {
-                pageCount = event.data.snapshot.value.length;
-                if(_hasEvent) {
-                  return new CarouselSlider(
-                    items: event.data.snapshot.value.map<Widget>((item) {
-                      print(item);
-                      return new Builder(builder: (BuildContext context) {
-                        Map<String, dynamic> map = new Map<String, dynamic>.from(item);
-                        return new Column(
-                            children: <Widget>[
-                              new WeatherCard(weather: Weather.fromJson(map))
-                            ]);
-                      });
-                    }).toList(),
-                    autoPlay: true,
-                    interval: new Duration(seconds: 15),
-                    viewportFraction: 1.0,
-                  );
-                }
-              }
-            }
-            return new Text('Loading...');
-          });
-    }
-    if (_hasEvent) {
       return new Scaffold(
         backgroundColor: new Color.fromARGB(255, 0, 77, 105),
-        body: new Padding(
+        body: _hasEvent ? new Padding(
           padding: new EdgeInsets.all(8.0),
           child: new Column(
             mainAxisSize: MainAxisSize.max,
             children: <Widget>[
               new Expanded(
                 child: new Image.asset('assets/icon-512x512.jpg'), flex: 4),
-              new Expanded(child: body, flex: 10),
-              new Expanded(child: bodyWeather, flex: 7)
-          ])));
-    } else {
-
-      return new Scaffold(
-        backgroundColor: new Color.fromARGB(255, 0, 77, 105),
-        body: new CarouselSlider(height: 1920.0,
+              new Expanded(child: bodyEvent(_query), flex: 10),
+              new Expanded(child: carouselWeather(_queryWeather), flex: 7)
+          ])) : new CarouselSlider(height: 1920.0,
           items: fullPage,
           autoPlay: true,
           interval: new Duration(seconds: 15),
@@ -207,4 +216,3 @@ class _MyHomePageState extends State<MyHomePage>
         ));
     }
   }
-}
