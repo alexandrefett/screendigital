@@ -141,8 +141,7 @@ class _MyHomePageState extends State<MyHomePage>
       setState(() {
         _query = query;
         if (_query != null) {
-          _query.onValue.listen((onValue) {
-            if (onValue.snapshot.value.length > 0) {
+          if(_query.onValue!=null) {
               setState(() {
                 print('-----------------true');
                 _hasEvent = true;
@@ -154,7 +153,6 @@ class _MyHomePageState extends State<MyHomePage>
                 _hasEvent = false;
               });
             }
-          });
         }
       });
     });
@@ -197,22 +195,26 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    if (_query != null) {
       return new Scaffold(
-        backgroundColor: new Color.fromARGB(255, 0, 77, 105),
-        body: _hasEvent ? new Padding(
-          padding: new EdgeInsets.all(8.0),
-          child: new Column(
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              new Expanded(
-                child: new Image.asset('assets/icon-512x512.jpg'), flex: 4),
-              new Expanded(child: bodyEvent(_query), flex: 10),
-              new Expanded(child: carouselWeather(_queryWeather), flex: 7)
-          ])) : new CarouselSlider(height: 1920.0,
-          items: fullPage,
-          autoPlay: true,
-          interval: new Duration(seconds: 15),
-          viewportFraction: 1.0,
-        ));
+          backgroundColor: new Color.fromARGB(255, 0, 77, 105),
+          body: _hasEvent ? new Padding(
+              padding: new EdgeInsets.all(8.0),
+              child: new Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    new Expanded(
+                        child: new Image.asset('assets/icon-512x512.jpg'),
+                        flex: 4),
+                    new Expanded(child: bodyEvent(_query), flex: 10),
+                    new Expanded(child: carouselWeather(_queryWeather), flex: 7)
+                  ])) : new CarouselSlider(height: 1920.0,
+            items: fullPage,
+            autoPlay: true,
+            interval: new Duration(seconds: 15),
+            viewportFraction: 1.0,
+          ));
     }
+    return new Text('Loading...');
   }
+}
