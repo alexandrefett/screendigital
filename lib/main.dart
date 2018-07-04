@@ -85,7 +85,6 @@ class _MyHomePageState extends State<MyHomePage>
             if(_hasEvent) {
               return new CarouselSlider(
                 items: event.data.snapshot.value.map<Widget>((item) {
-                  print(item);
                   return new Builder(builder: (BuildContext context) {
                     Map<String, dynamic> map = new Map<String, dynamic>.from(item);
                     return new Column(
@@ -105,32 +104,6 @@ class _MyHomePageState extends State<MyHomePage>
       });
   }
 
-  Widget bodyEvent(Query query){
-    return new StreamBuilder<Event>(
-        stream: query.onValue,
-        builder: (BuildContext context, AsyncSnapshot<Event> event) {
-          if (event.hasData) {
-            if (event.data.snapshot.value != null) {
-              print('------------------true');
-              _hasEvent = true;
-              return new ListView.builder(
-                  itemCount: event.data.snapshot.value.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    Map<String, dynamic> map = new Map<String, dynamic>.from(
-                        event.data.snapshot.value[index]);
-                    return new ListTile(
-                      title: new Text(map['description'],
-                          style: new TextStyle(color: Colors.white,fontSize: 22.0)),
-                      subtitle: new Text(map['location'],
-                          style: new TextStyle(color: Colors.white)),
-                    );
-                  });
-            }
-          }
-          return new Text('Loading...');
-        });
-
-  }
 
   @override
   void initState() {
@@ -140,20 +113,6 @@ class _MyHomePageState extends State<MyHomePage>
     Database.queryMeetings().then((Query query) {
       setState(() {
         _query = query;
-        if (_query != null) {
-          if(_query.onValue!=null) {
-              setState(() {
-                print('-----------------true');
-                _hasEvent = true;
-              });
-            }
-            else {
-              setState(() {
-                print('-----------------false');
-                _hasEvent = false;
-              });
-            }
-        }
       });
     });
 
@@ -184,7 +143,6 @@ class _MyHomePageState extends State<MyHomePage>
               Map<String, dynamic> map =
               new Map<String, dynamic>.from(event.snapshot.value[i]);
               fullPage.add(new Image.network(map['url']));
-              print(map['url']);
             }
           });
         }
@@ -195,26 +153,57 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    if (_query != null) {
+    if(_query!=null) {
       return new Scaffold(
           backgroundColor: new Color.fromARGB(255, 0, 77, 105),
-          body: _hasEvent ? new Padding(
-              padding: new EdgeInsets.all(8.0),
-              child: new Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: <Widget>[
-                    new Expanded(
-                        child: new Image.asset('assets/icon-512x512.jpg'),
-                        flex: 4),
-                    new Expanded(child: bodyEvent(_query), flex: 10),
-                    new Expanded(child: carouselWeather(_queryWeather), flex: 7)
-                  ])) : new CarouselSlider(height: 1920.0,
-            items: fullPage,
-            autoPlay: true,
-            interval: new Duration(seconds: 15),
-            viewportFraction: 1.0,
-          ));
+          body: new StreamBuilder<Event>(
+              stream: _query.onValue,
+              builder: (BuildContext context, AsyncSnapshot<Event> event) {
+                if (event.hasData) {
+                  if (event.data.snapshot.value != null) {
+                    _hasEvent = true;
+                    return new Padding(
+                        padding: new EdgeInsets.all(8.0),
+                        child: new Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children: <Widget>[
+                              new Expanded(child: new Image.asset(
+                                  'assets/icon-512x512.jpg'), flex: 4),
+                              new Expanded(child: new ListView.builder(
+                                  itemCount: event.data.snapshot.value.length,
+                                  itemBuilder: (BuildContext context,
+                                      int index) {
+                                    Map<String, dynamic> map = new Map<
+                                        String,
+                                        dynamic>.from(
+                                        event.data.snapshot.value[index]);
+                                    return new ListTile(
+                                      title: new Text(map['description'],
+                                          style: new TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 22.0)),
+                                      subtitle: new Text(map['location'],
+                                          style: new TextStyle(
+                                              color: Colors.white)),
+                                    );
+                                  }), flex: 10),
+                              new Expanded(
+                                  child: carouselWeather(_queryWeather),
+                                  flex: 7)
+                            ]));
+                  }
+                }
+                return new CarouselSlider(height: 1920.0,
+                  items: fullPage,
+                  autoPlay: true,
+                  interval: new Duration(seconds: 15),
+                  viewportFraction: 1.0,
+                );
+              }));
     }
-    return new Text('Loading...');
+    else
+      {
+        return new Text('Loading...');
+      }
   }
 }
