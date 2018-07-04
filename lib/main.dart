@@ -9,6 +9,7 @@ import 'package:screendigital/database.dart';
 import 'package:screendigital/models.dart';
 import 'package:screendigital/weather.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:screen/screen.dart';
 
 FirebaseUser user;
 
@@ -107,6 +108,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   void initState() {
+    Screen.keepOn(true);
     SystemChrome.setEnabledSystemUIOverlays([]);
     fullPage = new List<Widget>();
 
